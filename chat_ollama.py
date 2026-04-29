@@ -4,7 +4,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://192.168.0.203:11434")
+OLLAMA_IP = os.getenv("OLLAMA_IP", "localhost")
+OLLAMA_PORT = os.getenv("OLLAMA_PORT", "11434")
+
+OLLAMA_HOST = f"http://{OLLAMA_IP}:{OLLAMA_PORT}"
 client = Client(host=OLLAMA_HOST)
 
 def select_model():

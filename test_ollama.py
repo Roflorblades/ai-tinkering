@@ -1,6 +1,14 @@
 from ollama import Client
+import os
+from dotenv import load_dotenv
 
-client = Client(host="http://192.168.0.203:11434")
+load_dotenv()
+
+OLLAMA_IP = os.getenv("OLLAMA_IP")
+OLLAMA_PORT = os.getenv("OLLAMA_PORT")
+
+OLLAMA_HOST = f"http://{OLLAMA_IP}:{OLLAMA_PORT}"
+client = Client(host=OLLAMA_HOST)
 
 # --- Verfügbare Modelle anzeigen ---
 print("=== Installierte Modelle ===")
