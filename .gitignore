@@ -1,0 +1,13 @@
+# Umgebungsvariablen (Sensible Daten)
+.env
+
+# Python-Kram
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# Lokale Konfigurationen
+*.log
+config.local.json
