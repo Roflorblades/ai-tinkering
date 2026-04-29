@@ -12,8 +12,8 @@ client = Client(host=OLLAMA_HOST)
 
 # --- Verfügbare Modelle anzeigen ---
 print("=== Installierte Modelle ===")
-for m in client.list().models:           # .models statt ["models"]
-    print(f"  {m.model}  –  {round(m.size / 1e9, 1)} GB")   # m.model statt m['name']
+for m in client.list().models:          
+    print(f"  {m.model}  –  {round(m.size / 1e9, 1)} GB")   
 
 # --- Einfacher Test mit Streaming ---
 print("\n=== Test phi4-mini ===")
@@ -22,7 +22,7 @@ for chunk in client.chat(
     messages=[{"role": "user", "content": "Sag Hallo auf Deutsch in einem Satz."}],
     stream=True,
 ):
-    print(chunk.message.content, end="", flush=True)   # auch hier: .content statt ['content']
+    print(chunk.message.content, end="", flush=True)  
 
 print("\n\n=== Test gemma3:4b ===")
 for chunk in client.chat(
