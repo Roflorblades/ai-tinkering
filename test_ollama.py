@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-OLLAMA_IP = os.getenv("OLLAMA_IP")
-OLLAMA_PORT = os.getenv("OLLAMA_PORT")
+OLLAMA_IP = os.getenv("OLLAMA_IP", "localhost")
+OLLAMA_PORT = os.getenv("OLLAMA_PORT", "11434")
 
 
 OLLAMA_HOST = f"http://{OLLAMA_IP}:{OLLAMA_PORT}"
