@@ -31,6 +31,4 @@ def test_model(model_name: str):
     print()
 
 
-test_model("phi4-mini")
-test_model("gemma3:4b")
-test_model("gemma3:12b")
+test_model("qwen3.6:35b")

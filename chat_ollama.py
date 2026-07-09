@@ -13,7 +13,7 @@ OLLAMA_PORT = os.getenv("OLLAMA_PORT", "11434")
 OLLAMA_HOST = f"http://{OLLAMA_IP}:{OLLAMA_PORT}"
 client = Client(host=OLLAMA_HOST)
 
-PREFERRED_MODEL = "gemma3:12b"
+PREFERRED_MODEL = "qwen3.6:35b"
 
 
 def select_model():
