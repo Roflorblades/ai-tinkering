@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 
-from ollama_compare import compare_responses, create_clients, run_chat, select_model
+from ollama_compare import compare_responses, create_clients, run_chat, select_model, select_model_options
 
 
 load_dotenv()

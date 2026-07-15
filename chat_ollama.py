@@ -6,6 +6,7 @@ from ollama_compare import (
     create_clients,
     run_chat,
     select_model,
+    select_model_options
 )
 
 
