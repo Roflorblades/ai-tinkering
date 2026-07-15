@@ -1,3 +1,5 @@
+from typing import Any
+
 from ollama import Client
 from dotenv import load_dotenv
 
@@ -5,8 +7,9 @@ from ollama_compare import (
     compare_responses,
     create_clients,
     run_chat,
+    safe_run_chat,
     select_model,
-    select_model_options
+    select_model_options,
 )
 
 
@@ -35,9 +38,17 @@ def chat_single(client: Client, model: str, options: dict[str, Any]) -> None:
             continue
 
         history.append({"role": "user", "content": user_input})
-        response_text = run_chat(client, model, history, keep_alive="5m", options=options)
+        response_text, elapsed_seconds = safe_run_chat(
+            client,
+            model,
+            history,
+            keep_alive="5m",
+            options=options,
+            return_timing=True,
+        )
 
         print(f"\n[{model}]: {response_text}\n")
+        print(f"⏱️ Antwortzeit: {elapsed_seconds:.3f}s")
         history.append({"role": "assistant", "content": response_text})
 
 
@@ -74,13 +85,17 @@ def chat_compare(primary_client: Client, secondary_client: Client, model: str) -
             labels=("Instanz 1", "Instanz 2"),
             keep_alive="5m",
             options=options,
+            return_timing=True,
         )
 
-        for label, response in results.items():
-            print(f"\n[{label}] {response}\n")
+        for label, result in results.items():
+            response_text = result["response"]
+            elapsed_seconds = result["elapsed_seconds"]
+            print(f"\n[{label}] {response_text}\n")
+            print(f"⏱️ {label}: {elapsed_seconds:.3f}s")
 
-        history_a.append({"role": "assistant", "content": results["Instanz 1"]})
-        history_b.append({"role": "assistant", "content": results["Instanz 2"]})
+        history_a.append({"role": "assistant", "content": results["Instanz 1"]["response"]})
+        history_b.append({"role": "assistant", "content": results["Instanz 2"]["response"]})
 
 
 if __name__ == "__main__":

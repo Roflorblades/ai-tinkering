@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+import time
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
-from ollama import Client
+try:
+    from ollama import Client
+except ModuleNotFoundError:  # pragma: no cover - fallback for test environments without the package
+    Client = Any
 
 
 def make_host_url(ip: str, port: str) -> str:
@@ -113,11 +117,18 @@ def safe_run_chat(
     messages: Sequence[dict],
     keep_alive: Optional[str] = None,
     options: Optional[dict[str, Any]] = None,
-) -> str:
+    return_timing: bool = False,
+) -> Union[str, Tuple[str, float]]:
+    started = time.perf_counter()
     try:
-        return run_chat(client, model, messages, keep_alive=keep_alive, options=options)
+        response = run_chat(client, model, messages, keep_alive=keep_alive, options=options)
     except Exception as exc:
-        return f"[Fehler] {exc}"
+        response = f"[Fehler] {exc}"
+
+    elapsed_seconds = time.perf_counter() - started
+    if return_timing:
+        return response, round(elapsed_seconds, 3)
+    return response
 
 
 def compare_responses(
@@ -128,8 +139,20 @@ def compare_responses(
     labels: Tuple[str, str] = ("Instanz 1", "Instanz 2"),
     keep_alive: Optional[str] = None,
     options: Optional[dict[str, Any]] = None,
-) -> Dict[str, str]:
-    return {
-        labels[0]: safe_run_chat(primary_client, model, messages, keep_alive=keep_alive, options=options),
-        labels[1]: safe_run_chat(secondary_client, model, messages, keep_alive=keep_alive, options=options),
-    }
+    return_timing: bool = False,
+) -> Dict[str, Any]:
+    results: Dict[str, Any] = {}
+    for label, client in ((labels[0], primary_client), (labels[1], secondary_client)):
+        response, elapsed_seconds = safe_run_chat(
+            client,
+            model,
+            messages,
+            keep_alive=keep_alive,
+            options=options,
+            return_timing=True,
+        )
+        if return_timing:
+            results[label] = {"response": response, "elapsed_seconds": elapsed_seconds}
+        else:
+            results[label] = response
+    return results

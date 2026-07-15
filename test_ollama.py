@@ -1,3 +1,5 @@
+from typing import Any
+
 from dotenv import load_dotenv
 
 from ollama_compare import compare_responses, create_clients, run_chat, select_model, select_model_options
@@ -30,9 +32,11 @@ def test_prompt(prompt: str, model_name: str, options: dict[str, Any]) -> None:
         [{"role": "user", "content": prompt}],
         labels=("Instanz 1", "Instanz 2"),
         options=options,
+        return_timing=True,
     )
-    for label, response in results.items():
-        print(f"\n[{label}]\n{response}")
+    for label, result in results.items():
+        print(f"\n[{label}]\n{result['response']}")
+        print(f"⏱️ {label}: {result['elapsed_seconds']:.3f}s")
 
 
 if __name__ == "__main__":
