@@ -1,44 +1,23 @@
 from ollama import Client
-import os
 from dotenv import load_dotenv
+
+from ollama_compare import (
+    compare_responses,
+    create_clients,
+    run_chat,
+    select_model,
+)
 
 
 load_dotenv()
 
-
-OLLAMA_IP = os.getenv("OLLAMA_IP", "localhost")
-OLLAMA_PORT = os.getenv("OLLAMA_PORT", "11434")
-
-
-OLLAMA_HOST = f"http://{OLLAMA_IP}:{OLLAMA_PORT}"
-client = Client(host=OLLAMA_HOST)
-
-PREFERRED_MODEL = "qwen3.6:35b"
+primary_client, secondary_client = create_clients()
+model = select_model(primary_client)
+options = select_model_options(model)
 
 
-def select_model():
-    print("\n=== Verfügbare Modelle ===")
-    models = client.list().models
-    default_idx = 0
-
-    for i, m in enumerate(models):
-        marker = ""
-        if m.model == PREFERRED_MODEL:
-            marker = "  ★ Standard"
-            default_idx = i
-        print(f"  [{i}] {m.model}  –  {round(m.size / 1e9, 1)} GB{marker}")
-
-    while True:
-        choice = input(f"\nModell wählen (Nummer, Enter = [{default_idx}]): ").strip()
-        if choice == "":
-            return models[default_idx].model
-        if choice.isdigit() and 0 <= int(choice) < len(models):
-            return models[int(choice)].model
-        print(f"  Ungültige Eingabe. Bitte eine Zahl zwischen 0 und {len(models) - 1} eingeben.")
-
-
-def chat(model: str):
-    history = []
+def chat_single(client: Client, model: str, options: dict[str, Any]) -> None:
+    history: list[dict] = []
     print(f"\n💬 Chat mit [{model}] — 'exit' zum Beenden, 'reset' für neues Gespräch\n")
 
     while True:
@@ -55,24 +34,56 @@ def chat(model: str):
             continue
 
         history.append({"role": "user", "content": user_input})
+        response_text = run_chat(client, model, history, keep_alive="5m", options=options)
 
-        print(f"\n[{model}]: ", end="", flush=True)
-        response_text = ""
-
-        for chunk in client.chat(
-            model=model,
-            messages=history,
-            stream=True,
-            keep_alive="5m",
-        ):
-            token = chunk.message.content
-            print(token, end="", flush=True)
-            response_text += token
-
-        print("\n")
+        print(f"\n[{model}]: {response_text}\n")
         history.append({"role": "assistant", "content": response_text})
 
 
+def chat_compare(primary_client: Client, secondary_client: Client, model: str) -> None:
+    history_a: list[dict] = []
+    history_b: list[dict] = []
+
+    print(
+        f"\n💬 Vergleichschat mit zwei Instanzen [{model}] — 'exit' zum Beenden, 'reset' für neues Gespräch\n"
+    )
+
+    while True:
+        user_input = input("Du: ").strip()
+
+        if user_input.lower() == "exit":
+            print("Tschüss!")
+            break
+        if user_input.lower() == "reset":
+            history_a = []
+            history_b = []
+            print("--- Gesprächsverlauf gelöscht ---\n")
+            continue
+        if not user_input:
+            continue
+
+        history_a.append({"role": "user", "content": user_input})
+        history_b.append({"role": "user", "content": user_input})
+
+        results = compare_responses(
+            primary_client,
+            secondary_client,
+            model,
+            history_a,
+            labels=("Instanz 1", "Instanz 2"),
+            keep_alive="5m",
+            options=options,
+        )
+
+        for label, response in results.items():
+            print(f"\n[{label}] {response}\n")
+
+        history_a.append({"role": "assistant", "content": results["Instanz 1"]})
+        history_b.append({"role": "assistant", "content": results["Instanz 2"]})
+
+
 if __name__ == "__main__":
-    model = select_model()
-    chat(model)
+    if secondary_client is not None:
+        chat_compare(primary_client, secondary_client, model)
+    else:
+        chat_single(primary_client, model)
